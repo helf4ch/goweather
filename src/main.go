@@ -5,20 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-)
-
-var (
-	url = "https://api.open-meteo.com/v1/forecast?" +
-		"latitude=50.2796&" +
-		"longitude=127.5405&" +
-		"current=relative_humidity_2m," +
-		"temperature_2m," +
-		"precipitation," +
-		"wind_speed_10m," +
-		"wind_direction_10m," +
-		"wind_gusts_10m," +
-		"surface_pressure&" +
-		"timezone=auto"
+	"net/url"
+	"strconv"
 )
 
 type Config struct {
@@ -30,6 +18,44 @@ type Config struct {
 	ShowWindSpeed bool
 	ShowWindDir   bool
 	ShowWindGusts bool
+}
+
+func prepUrl(lat, lon float64) string {
+	urlObj, err := url.Parse("https://api.open-meteo.com/v1/forecast")
+	if err != nil {
+		panic(err)
+	}
+
+	v := url.Values{}
+	v.Add("latitude", strconv.FormatFloat(lat, 'g', 10, 64))
+	v.Add("longitude", strconv.FormatFloat(lon, 'g', 10, 64))
+	v.Add("current", "relative_humidity_2m")
+	v.Add("current", "temperature_2m")
+	v.Add("current", "precipitation")
+	v.Add("current", "surface_pressure")
+	v.Add("current", "wind_speed_10m")
+	v.Add("current", "wind_direction_10m")
+	v.Add("current", "wind_gusts_10m")
+	v.Add("timezone", "auto")
+
+	urlObj.RawQuery = v.Encode()
+
+	return urlObj.String()
+}
+
+func GetWeatherRaw(lat, lon float64) (int, []byte) {
+	res, err := http.Get(prepUrl(lat, lon))
+	if err != nil {
+		panic(err)
+	}
+
+	defer res.Body.Close()
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	return res.StatusCode, body
 }
 
 func main() {
@@ -72,20 +98,18 @@ func main() {
 		*showWindGusts,
 	}
 
-	lat := flag.Arg(0)
-	lon := flag.Arg(1)
-
-	res, err := http.Get(url)
+	lat, err := strconv.ParseFloat(flag.Arg(0), 64)
 	if err != nil {
-		fmt.Println(err)
+		flag.Usage()
+		return
 	}
 
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
+	lon, err := strconv.ParseFloat(flag.Arg(1), 64)
 	if err != nil {
-		fmt.Println(err)
+		flag.Usage()
+		return
 	}
 
-	fmt.Println(res.StatusCode)
-	fmt.Printf("%s", body)
+	fmt.Println(config)
+	fmt.Println(GetWeatherRaw(lat, lon))
 }
