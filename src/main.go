@@ -82,7 +82,7 @@ type Values struct {
 
 type Response struct {
 	Latitude    float64 `json:"latitude"`
-	Longitude   float64 `json:"longtitude"`
+	Longitude   float64 `json:"longitude"`
 	Elevation   float64 `json:"elevation"`
 	Timezone    string  `json:"timezone_abbreviation"`
 	ValuesUnits Units   `json:"current_units"`
@@ -99,7 +99,44 @@ func Parse(c Config, raw []byte) {
 		panic(err)
 	}
 
-	fmt.Println(data)
+	fmt.Printf("Time: %s\n", data.Values.Time)
+	fmt.Printf("Timezone: %s\n", data.Timezone)
+	fmt.Printf("Elevation: %.1f\n", data.Elevation)
+
+	if c.ShowTemp {
+		fmt.Printf("Temperature: %.1f %s\n",
+			data.Values.Temperature, data.ValuesUnits.Temperature)
+	}
+
+	if c.ShowHumid {
+		fmt.Printf("Humidity: %d %s\n",
+			data.Values.Humidity, data.ValuesUnits.Humidity)
+	}
+
+	if c.ShowPrecipit {
+		fmt.Printf("Precipitation: %.1f %s\n",
+			data.Values.Precipitation, data.ValuesUnits.Precipitation)
+	}
+
+	if c.ShowPressure {
+		fmt.Printf("Pressure: %.1f %s\n",
+			data.Values.Pressure, data.ValuesUnits.Pressure)
+	}
+
+	if c.ShowWindSpeed {
+		fmt.Printf("Wind speed: %.1f %s\n",
+			data.Values.WindSpeed, data.ValuesUnits.WindSpeed)
+	}
+
+	if c.ShowWindDir {
+		fmt.Printf("Wind direction: %d %s\n",
+			data.Values.WindDirection, data.ValuesUnits.WindDirection)
+	}
+
+	if c.ShowWindGusts {
+		fmt.Printf("Wind gusts: %.1f %s\n",
+			data.Values.WindGusts, data.ValuesUnits.WindGusts)
+	}
 }
 
 func main() {
@@ -154,6 +191,11 @@ func main() {
 		return
 	}
 
-	_, raw := GetWeatherRaw(lat, lon)
+	status, raw := GetWeatherRaw(lat, lon)
+	fmt.Printf("Status code: %d\n", status)
+	if status != 200 {
+		panic("Status code returned is not 200.\n")
+	}
+
 	Parse(config, raw)
 }
