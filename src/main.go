@@ -92,6 +92,7 @@ type Response struct {
 func Parse(c Config, raw []byte) {
 	if c.ShowRaw {
 		fmt.Printf("%s", raw)
+		return
 	}
 
 	var data Response
